@@ -1,10 +1,7 @@
 import { initialCards } from './cards';
-import './index.css';
 import { createCard, deleteCard, likeCard } from './components/card';
-import { openPopup, closePopup, openPopupImage } from './components/modal';
-
-// Темплейт карточки
-const cardTemplate = document.querySelector('#card-template').content;
+import { openPopup, closePopup } from './components/modal';
+import './index.css';
 
 // DOM узлы
 const cardsContainer = document.querySelector('.places__list');
@@ -24,7 +21,19 @@ const newPlaceForm = document.forms['new-place']; //форма создания 
 const inputNewPlaceName = newPlaceForm.elements['place-name'];
 const inputNewPlaceLink = newPlaceForm.elements.link;
 
-const popup = document.querySelectorAll('.popup');
+// Темплейт карточки
+const cardTemplate = document.querySelector('#card-template').content;
+
+const imagePopup = document.querySelector('.popup__image'); // картинка в попапе
+const titlePopup = document.querySelector('.popup__caption'); //заголовок
+const popupTypeImage = document.querySelector('.popup_type_image'); //попап с картинкой
+
+const openPopupImage = (name, link) => {
+    imagePopup.src = link;
+    titlePopup.textContent = name;
+    imagePopup.alt = name;
+    openPopup(popupTypeImage); //открытие попапа с изображением картинки
+};
 
 // Вывести карточки на страницу
 initialCards.forEach((card) => {
@@ -65,5 +74,3 @@ const handleFormSubmit = (evt) => {
 };
 
 editProfileForm.addEventListener('submit', handleFormSubmit);
-
-
