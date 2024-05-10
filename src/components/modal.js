@@ -2,24 +2,34 @@
 export const openPopup = (popup) => {
     popup.classList.add('popup_is-opened');
     popup.classList.add('popup_is-animated');
-    const popupCloseButton = popup.querySelector('.popup__close'); //кнопка закрытия попапов
+    const closeButton = popup.querySelector('.popup__close'); //кнопка закрытия попапов
 
-    popupCloseButton.addEventListener('click', () => closePopup(popup));
+    closeButton.addEventListener('click', () => closePopup(popup));
 
     window.addEventListener('keydown', keyDownListener);
+
+    popup.addEventListener('click', popupClickListener);
 };
 
 //функция закрытия попапа
 export const closePopup = (popup) => {
     popup.classList.remove('popup_is-opened');
     window.removeEventListener('keydown', keyDownListener);
+    popup.removeEventListener('click', popupClickListener);
 };
 
 //закрытие попапа по кнопке esc
-export const keyDownListener = (e) => {
+const keyDownListener = (e) => {
     const openedPopup = document.querySelector('.popup_is-opened');
     if (e.key === 'Escape' && openedPopup) {
         closePopup(openedPopup);
+    }
+};
+
+//закрытие попапа кнопкой мыши за пределами попапа
+const popupClickListener = (e) => {
+    if (e.target === e.currentTarget) {
+        closePopup(e.currentTarget);
     }
 };
 

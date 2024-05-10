@@ -66,11 +66,4 @@ const handleFormSubmit = (evt) => {
 
 editProfileForm.addEventListener('submit', handleFormSubmit);
 
-//закрытие попапа кнопкой мыши за пределами попапа
-popup.forEach((el) => {
-    el.addEventListener('click', (e) => {
-        if (e.target === el) {
-            closePopup(el);
-        }
-    });
-});
+
