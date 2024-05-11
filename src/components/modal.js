@@ -3,15 +3,9 @@ export const openPopup = (popup) => {
     popup.classList.add('popup_is-opened');
     popup.classList.add('popup_is-animated');
     const closeButton = popup.querySelector('.popup__close'); //кнопка закрытия попапов
-
-    const closePopupByCloseBtn = () => {
-        closePopup(popup);
-        closeButton.removeEventListener('click', closePopupByCloseBtn);
-    };
-
-    closeButton.addEventListener('click', closePopupByCloseBtn);
     window.addEventListener('keydown', closePopupOnEsc);
     popup.addEventListener('click', closePopupOnClickOut);
+    closeButton.addEventListener('click', closePopupByCloseBtn);
 };
 
 //функция закрытия попапа
@@ -19,6 +13,15 @@ export const closePopup = (popup) => {
     popup.classList.remove('popup_is-opened');
     window.removeEventListener('keydown', closePopupOnEsc);
     popup.removeEventListener('click', closePopupOnClickOut);
+
+    const closeButton = popup.querySelector('.popup__close');
+    closeButton.removeEventListener('click', closePopupByCloseBtn);
+};
+
+// закрытие попапа по кнопке (х)
+const closePopupByCloseBtn = (e) => {
+    const openedPopup = document.querySelector('.popup_is-opened');
+    closePopup(openedPopup);
 };
 
 //закрытие попапа по кнопке esc
