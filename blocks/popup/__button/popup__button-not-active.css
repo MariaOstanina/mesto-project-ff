@@ -1,0 +1,27 @@
+.popup__button-not-active {
+  width: 100%;
+  height: 50px;
+  font-size: 18px;
+  line-height: 22px;
+  color: #000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  border-radius: 2px;
+  border: 1px solid currentColor;
+  transition: visibility 0s, background 0.3s;
+  margin-top: 48px;
+  opacity: 20%;
+}
+
+@media screen and (max-width: 568px) {
+  .popup__button-not-active {
+    font-size: 14px;
+    line-height: 17px;
+  }
+}
+
+.popup__button-not-active:hover {
+  cursor: default;
+}

@@ -1,6 +1,14 @@
-import { initialCards } from './cards';
-import { createCard, deleteCard, likeCard } from './components/card';
+import { initialCards } from './cards'; //не используется
+import { createCard, deleteCard, likeCard, cardLikesNumber } from './components/card';
 import { openPopup, closePopup } from './components/modal';
+import { validationConfig, enableValidation, clearValidation } from './components/validation';
+import {
+    getUser,
+    getInitialCards,
+    createUser,
+    createCardApi,
+    deleteCardApi,
+} from './components/api';
 import './index.css';
 
 // DOM узлы
@@ -35,42 +43,75 @@ const openPopupImage = (name, link) => {
     openPopup(popupTypeImage); //открытие попапа с изображением картинки
 };
 
-// Вывести карточки на страницу
-initialCards.forEach((card) => {
-    const cardElement = createCard(card, cardTemplate, deleteCard, likeCard, openPopupImage);
-    cardsContainer.append(cardElement);
+//валидация
+enableValidation(validationConfig);
+
+//отображение данных пользователя
+getUser().then((data) => {
+    profileTitle.textContent = data.name;
+    profileDescription.textContent = data.about;
 });
 
-// открытие попапа для редактирования
+// открытие попапа для редактирования профиля
 profileEditButton.addEventListener('click', () => {
+    clearValidation(editProfileForm, validationConfig);
     openPopup(popupEdit);
     nameInput.value = profileTitle.textContent;
     jobInput.value = profileDescription.textContent;
 });
 
 //открытие и закрытие попапа новой карточки
-openPopupAddCardButton.addEventListener('click', () => openPopup(newCardPopup));
+openPopupAddCardButton.addEventListener('click', () => {
+    clearValidation(newPlaceForm, validationConfig);
+    openPopup(newCardPopup);
+});
 
 newPlaceForm.addEventListener('submit', (evt) => {
     evt.preventDefault();
     const card = createCard(
-        { name: inputNewPlaceName.value, link: inputNewPlaceLink.value },
+        { name: inputNewPlaceName.value, link: inputNewPlaceLink.value, likes: [] },
         cardTemplate,
         deleteCard,
         likeCard,
-        openPopupImage
+        openPopupImage,
+        cardLikesNumber
     );
     cardsContainer.prepend(card);
+    createCardApi({ name: inputNewPlaceName.value, link: inputNewPlaceLink.value });
     newPlaceForm.reset();
     closePopup(newCardPopup);
 });
 
-// отправка формы редактирования
+// отправка формы редактирования профиля
 const handleFormSubmit = (evt) => {
     evt.preventDefault();
     profileTitle.textContent = nameInput.value;
     profileDescription.textContent = jobInput.value;
+    createUser({ name: profileTitle.textContent, about: profileDescription.textContent });
     closePopup(popupEdit);
 };
 
 editProfileForm.addEventListener('submit', handleFormSubmit);
+
+//отображение карточек с сервера
+getInitialCards().then((data) => {
+    data.forEach((card) => {
+        const cardElement = createCard(
+            card,
+            cardTemplate,
+            deleteCard,
+            likeCard,
+            openPopupImage,
+            cardLikesNumber
+        );
+        cardsContainer.append(cardElement);
+    });
+});
+
+//deleteCardApi()
+
+// Вывести карточки на страницу - теперь карточки загружаются с сервера
+// initialCards.forEach((card) => {
+//     const cardElement = createCard(card, cardTemplate, deleteCard, likeCard, openPopupImage);
+//     cardsContainer.append(cardElement);
+// });
