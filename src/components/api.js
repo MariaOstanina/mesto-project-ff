@@ -1,3 +1,5 @@
+import {saveLoading} from '../index'
+
 const config = {
     baseUrl: 'https://nomoreparties.co/v1/wff-cohort-14',
     headers: {
@@ -36,6 +38,9 @@ export const createUser = (user) => {
     .catch(err => {
         console.log(err);
     })
+    .finally(() => {
+        saveLoading(false)
+    })
 }
 
 //получение массива карточек
@@ -45,12 +50,6 @@ export const getInitialCards = () => {
         headers: config.headers
     })
     .then(handleResponse)
-    // .then(data => {
-    //     data.forEach(element => {
-    //         console.log(element)
-    //     });
-            
-    // })
     .catch(err => {
         console.log(err);
     })
@@ -67,16 +66,56 @@ export const createCardApi = (card) => {
     .catch(err => {
         console.log(err);
     })
+    .then(() => {
+        saveLoading(false)
+    })
 }
 
-//удаление карточки
-// export const deleteCardApi = (cardId) => {
-//     return fetch(`${config.baseUrl}/cards/${cardId}`, {
-//         method: "DELETE",
-//         headers: config.headers
-//     })
-//     .then(handleResponse)
-//     .catch(err => {
-//         console.log(err);
-//     })
-// }
+//удаление карточки с сервера
+export const deleteCardApi = (cardId) => {
+    return fetch(`${config.baseUrl}/cards/${cardId}`, {
+        method: "DELETE",
+        headers: config.headers
+    })
+    .then(handleResponse)
+    .catch(err => {
+        console.log(err);
+    })
+}
+//отправка лайка карточки на сервер
+export const pushLikeCardApi = (cardId) => {
+    return fetch(`${config.baseUrl}/cards/likes/${cardId}`, {
+        method: "PUT",
+        headers: config.headers
+    })
+    .then(handleResponse)
+    .catch(err => {
+        console.log(err);
+    })
+}
+//удаление лайка карточки с сервера
+export const deleteCardLikeApi = (cardId) => {
+    return fetch(`${config.baseUrl}/cards/likes/${cardId}`, {
+        method: "DELETE",
+        headers: config.headers
+    })
+    .then(handleResponse)
+    .catch(err => {
+        console.log(err);
+    })
+}
+//отправка на сервер нового изображения аватара
+export const newAvatarApi = (avatar) => {
+    return fetch(`${config.baseUrl}/users/me/avatar`, {
+        method: 'PATCH',
+        headers: config.headers,
+        body: JSON.stringify({avatar: avatar})
+    })
+    .then(handleResponse)
+    .catch(err => {
+        console.log(err);
+    })
+    .finally(() => {
+        saveLoading(false)
+    })
+}

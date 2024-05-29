@@ -1,5 +1,5 @@
 import { initialCards } from './cards'; //не используется
-import { createCard, deleteCard, likeCard, cardLikesNumber } from './components/card';
+import { createCard, deleteCard, cardLikesNumber, handleLikes } from './components/card';
 import { openPopup, closePopup } from './components/modal';
 import { validationConfig, enableValidation, clearValidation } from './components/validation';
 import {
@@ -7,9 +7,12 @@ import {
     getInitialCards,
     createUser,
     createCardApi,
-    deleteCardApi,
+    newAvatarApi
 } from './components/api';
 import './index.css';
+
+let userId = '';
+let userAvatar = '';
 
 // DOM узлы
 const cardsContainer = document.querySelector('.places__list');
@@ -28,6 +31,13 @@ const jobInput = editProfileForm.elements.description; // введенное з�
 const newPlaceForm = document.forms['new-place']; //форма создания новой карточки
 const inputNewPlaceName = newPlaceForm.elements['place-name'];
 const inputNewPlaceLink = newPlaceForm.elements.link;
+
+const profileImage = document.querySelector('.profile__image'); //аватар
+const popupAvatar = document.querySelector('.popup_type_avatar');//попап для редактирования аватара
+const avatarProfileForm = document.forms['avatar-profile']; //форма изменения аватара
+const urlAvatarInput = avatarProfileForm.elements.link;//поле для ввода ссылки на картинку
+
+const button = document.querySelectorAll('.popup__button')
 
 // Темплейт карточки
 const cardTemplate = document.querySelector('#card-template').content;
@@ -50,6 +60,10 @@ enableValidation(validationConfig);
 getUser().then((data) => {
     profileTitle.textContent = data.name;
     profileDescription.textContent = data.about;
+    userId = data._id;
+    userAvatar = data.avatar;
+    profileImage.setAttribute(
+        "style", `background-image: url('${userAvatar}')`)
 });
 
 // открытие попапа для редактирования профиля
@@ -62,6 +76,8 @@ profileEditButton.addEventListener('click', () => {
 
 //открытие и закрытие попапа новой карточки
 openPopupAddCardButton.addEventListener('click', () => {
+    inputNewPlaceName.value = "";
+    inputNewPlaceLink.value = "";
     clearValidation(newPlaceForm, validationConfig);
     openPopup(newCardPopup);
 });
@@ -72,11 +88,13 @@ newPlaceForm.addEventListener('submit', (evt) => {
         { name: inputNewPlaceName.value, link: inputNewPlaceLink.value, likes: [] },
         cardTemplate,
         deleteCard,
-        likeCard,
         openPopupImage,
-        cardLikesNumber
+        cardLikesNumber,
+        true,
+        handleLikes
     );
     cardsContainer.prepend(card);
+    saveLoading(true)
     createCardApi({ name: inputNewPlaceName.value, link: inputNewPlaceLink.value });
     newPlaceForm.reset();
     closePopup(newCardPopup);
@@ -87,6 +105,7 @@ const handleFormSubmit = (evt) => {
     evt.preventDefault();
     profileTitle.textContent = nameInput.value;
     profileDescription.textContent = jobInput.value;
+    saveLoading(true);
     createUser({ name: profileTitle.textContent, about: profileDescription.textContent });
     closePopup(popupEdit);
 };
@@ -100,15 +119,46 @@ getInitialCards().then((data) => {
             card,
             cardTemplate,
             deleteCard,
-            likeCard,
             openPopupImage,
-            cardLikesNumber
+            cardLikesNumber,
+            card.owner._id === userId,
+            handleLikes
         );
         cardsContainer.append(cardElement);
     });
 });
 
-//deleteCardApi()
+//открытие попапа для изменения аватара
+profileImage.addEventListener('click', () => {
+    urlAvatarInput.value = "";
+    clearValidation(avatarProfileForm, validationConfig);
+    openPopup(popupAvatar)
+})
+
+const avatarFormSubmit = (evt) => {
+    evt.preventDefault();
+    profileImage.setAttribute(
+        "style", `background-image: url('${urlAvatarInput.value}')`
+    )
+    saveLoading(true)
+    newAvatarApi(urlAvatarInput.value);
+    avatarProfileForm.reset();
+    closePopup(popupAvatar);
+}
+//отправка формы с аватаром
+avatarProfileForm.addEventListener('submit', avatarFormSubmit)
+
+export const saveLoading = (isLoading) => {
+    if(isLoading) {
+        button.forEach((el) => {
+            el.textContent = "Сохранение..."
+        })
+    } else {
+        button.forEach((el) => {
+            el.textContent = "Сохранить"
+        })
+    }
+}
 
 // Вывести карточки на страницу - теперь карточки загружаются с сервера
 // initialCards.forEach((card) => {
