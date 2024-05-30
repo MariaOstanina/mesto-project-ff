@@ -1,5 +1,5 @@
 import { initialCards } from './cards'; //не используется
-import { createCard, deleteCard, cardLikesNumber, handleLikes } from './components/card';
+import { createCard, deleteCard, deleteCardElement, cardLikesNumber, handleLikes } from './components/card';
 import { openPopup, closePopup } from './components/modal';
 import { validationConfig, enableValidation, clearValidation } from './components/validation';
 import {
@@ -11,7 +11,6 @@ import {
 } from './components/api';
 import './index.css';
 
-let userId = '';
 let userAvatar = '';
 
 // DOM узлы
@@ -56,16 +55,6 @@ const openPopupImage = (name, link) => {
 //валидация
 enableValidation(validationConfig);
 
-//отображение данных пользователя
-getUser().then((data) => {
-    profileTitle.textContent = data.name;
-    profileDescription.textContent = data.about;
-    userId = data._id;
-    userAvatar = data.avatar;
-    profileImage.setAttribute(
-        "style", `background-image: url('${userAvatar}')`)
-});
-
 // открытие попапа для редактирования профиля
 profileEditButton.addEventListener('click', () => {
     clearValidation(editProfileForm, validationConfig);
@@ -74,33 +63,40 @@ profileEditButton.addEventListener('click', () => {
     jobInput.value = profileDescription.textContent;
 });
 
-//открытие и закрытие попапа новой карточки
+//открытие попапа новой карточки
 openPopupAddCardButton.addEventListener('click', () => {
     inputNewPlaceName.value = "";
     inputNewPlaceLink.value = "";
     clearValidation(newPlaceForm, validationConfig);
     openPopup(newCardPopup);
 });
-
+//заполнение формы новой карточки
 newPlaceForm.addEventListener('submit', (evt) => {
     evt.preventDefault();
-    const card = createCard(
-        { name: inputNewPlaceName.value, link: inputNewPlaceLink.value, likes: [] },
-        cardTemplate,
-        deleteCard,
-        openPopupImage,
-        cardLikesNumber,
-        true,
-        handleLikes
-    );
-    cardsContainer.prepend(card);
     saveLoading(true)
-    createCardApi({ name: inputNewPlaceName.value, link: inputNewPlaceLink.value });
+    //отправка карточки на сервер
+    createCardApi({ name: inputNewPlaceName.value, link: inputNewPlaceLink.value })
+    .then((data) => {
+        const card = createCard(
+            data,
+            cardTemplate,
+            deleteCardElement,
+            openPopupImage,
+            cardLikesNumber,
+            true,
+            handleLikes,
+            false
+        );
+   
+    //отображение карточки на странице
+    cardsContainer.prepend(card);
+    //очистка формы
     newPlaceForm.reset();
-    closePopup(newCardPopup);
+    closePopup(newCardPopup);//закрытие попапа
+    })
 });
 
-// отправка формы редактирования профиля
+// функция редактирования формы профиля и отправки данных на сервер
 const handleFormSubmit = (evt) => {
     evt.preventDefault();
     profileTitle.textContent = nameInput.value;
@@ -109,24 +105,30 @@ const handleFormSubmit = (evt) => {
     createUser({ name: profileTitle.textContent, about: profileDescription.textContent });
     closePopup(popupEdit);
 };
-
+//навесили слушатель на форму редактирования профиля
 editProfileForm.addEventListener('submit', handleFormSubmit);
 
 //отображение карточек с сервера
-getInitialCards().then((data) => {
-    data.forEach((card) => {
+Promise.all([getUser(), getInitialCards()])
+.then(([user, cards]) => {
+    profileTitle.textContent = user.name;
+    profileDescription.textContent = user.about;
+    userAvatar = user.avatar;
+    profileImage.setAttribute("style", `background-image: url('${userAvatar}')`);
+    cards.forEach((card) => {
         const cardElement = createCard(
             card,
             cardTemplate,
-            deleteCard,
+            deleteCardElement,
             openPopupImage,
             cardLikesNumber,
-            card.owner._id === userId,
-            handleLikes
+            card.owner._id === user._id,
+            handleLikes,
+            card.likes.some(like => like._id === user._id)
         );
         cardsContainer.append(cardElement);
     });
-});
+})
 
 //открытие попапа для изменения аватара
 profileImage.addEventListener('click', () => {
@@ -134,7 +136,7 @@ profileImage.addEventListener('click', () => {
     clearValidation(avatarProfileForm, validationConfig);
     openPopup(popupAvatar)
 })
-
+//заполнение формы с аватаром и отправка данных на сервер
 const avatarFormSubmit = (evt) => {
     evt.preventDefault();
     profileImage.setAttribute(
@@ -145,9 +147,9 @@ const avatarFormSubmit = (evt) => {
     avatarProfileForm.reset();
     closePopup(popupAvatar);
 }
-//отправка формы с аватаром
+//навесили слушатель на форму с аватаром
 avatarProfileForm.addEventListener('submit', avatarFormSubmit)
-
+//функция, меняющая текст кнопки во время ожидания отправки формы
 export const saveLoading = (isLoading) => {
     if(isLoading) {
         button.forEach((el) => {
@@ -159,9 +161,3 @@ export const saveLoading = (isLoading) => {
         })
     }
 }
-
-// Вывести карточки на страницу - теперь карточки загружаются с сервера
-// initialCards.forEach((card) => {
-//     const cardElement = createCard(card, cardTemplate, deleteCard, likeCard, openPopupImage);
-//     cardsContainer.append(cardElement);
-// });

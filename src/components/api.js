@@ -66,7 +66,7 @@ export const createCardApi = (card) => {
     .catch(err => {
         console.log(err);
     })
-    .then(() => {
+    .finally(() => {
         saveLoading(false)
     })
 }
