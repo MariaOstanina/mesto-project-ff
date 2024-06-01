@@ -4,12 +4,11 @@ import { deleteCardApi, pushLikeCardApi,
 export const createCard = (
     card,
     cardTemplate,
-    deleteCardElementFn,
+    deleteCardFn,
     openPopupImageFn,
     cardLikesNumberFn,
-    isMyCard,
-    handleLikesFn,
-    hasMyLike
+    userId,
+    handleLikesFn
 ) => {
     const cardElement = cardTemplate.querySelector('.places__item').cloneNode(true);
     const cardImage = cardElement.querySelector('.card__image');
@@ -24,12 +23,10 @@ export const createCard = (
    
     //удаление карточки
     //если карточка создана мной, нажимаем на корзину
-    if(isMyCard){
+    if (card.owner._id === userId) {
         cardDeleteButton.addEventListener('click', () => {
-            deleteCardElementFn(cardElement)
-            deleteCardApi(card._id)
-        });
-    } else { // иначе иконка корзины не отображается
+            deleteCardFn(card._id, cardElement)}
+        )} else { // иначе иконка корзины не отображается
         cardDeleteButton.style.display = "none"
     }
     //навесили слушатель на картинку карточки
@@ -44,11 +41,21 @@ export const createCard = (
 
     cardLikesNumberFn(cardLikesContainer, card.likes.length);
 
-    if(hasMyLike){
+    if(card.likes.some(like => like._id === userId)){
        likeCard(cardLikeButton)
     }
     return cardElement;
 };
+//функция удаления карточки
+export const deleteCard = (cardId, card) => {
+    deleteCardApi(cardId)
+    .then(() => {
+        deleteCardElement(card)
+    })
+    .catch(err => {
+        console.error(err);
+    })
+}
 
 //функция удаления карточки из DOM
 export const deleteCardElement = (card) => {
@@ -56,25 +63,13 @@ export const deleteCardElement = (card) => {
 };
 //функция для работы с кнопкой лайка
 export const handleLikes = (element, cardId, like) => {
-    if(element.classList.contains('card__like-button_is-active')) {//если лайк уже поставлен
-        deleteCardLikeApi(cardId)//удалить лайк с сервера
-        .then((res) => {
-            likeCard(element)//поменять цвет сердечка
-            cardLikesNumber(like, res.likes.length)//изменить количество лайков на карточке
-        })
-        .catch((err) => {
-            console.error(err);
-          });
-    } else {
-        pushLikeCardApi(cardId)//иначе отправить лайк на сервер
-        .then((res) => {
-            likeCard(element)//поменять цвет сердечка
-            cardLikesNumber(like, res.likes.length)//изменить количество лайков на карточке
-        })
-        .catch((err) => {
-            console.log(err);
-          });
-    }
+    const likeMethod = element.classList.contains('card__like-button_is-active') ? deleteCardLikeApi : pushLikeCardApi;
+    likeMethod(cardId) 
+            .then((res) => {
+               likeCard(element)
+               cardLikesNumber(like, res.likes.length)
+            })
+            .catch(err => console.error(err));
 }
 //меняет цвет лайкнутого сердечка
 const likeCard = (element) => {

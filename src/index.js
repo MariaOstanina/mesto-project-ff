@@ -1,7 +1,6 @@
-import { initialCards } from './cards'; //не используется
 import { createCard, deleteCard, deleteCardElement, cardLikesNumber, handleLikes } from './components/card';
 import { openPopup, closePopup } from './components/modal';
-import { validationConfig, enableValidation, clearValidation } from './components/validation';
+import { enableValidation, clearValidation } from './components/validation';
 import {
     getUser,
     getInitialCards,
@@ -12,6 +11,16 @@ import {
 import './index.css';
 
 let userAvatar = '';
+let userId = '';
+
+const validationConfig = {
+    formSelector: '.popup__form',
+    inputSelector: '.popup__input',
+    submitButtonSelector: '.popup__button',
+    inactiveButtonClass: 'popup__button-not-active',
+    inputErrorClass: 'popup__input_type_error',
+    errorClass: 'popup__input-error-active'
+};
 
 // DOM узлы
 const cardsContainer = document.querySelector('.places__list');
@@ -35,8 +44,6 @@ const profileImage = document.querySelector('.profile__image'); //аватар
 const popupAvatar = document.querySelector('.popup_type_avatar');//попап для редактирования аватара
 const avatarProfileForm = document.forms['avatar-profile']; //форма изменения аватара
 const urlAvatarInput = avatarProfileForm.elements.link;//поле для ввода ссылки на картинку
-
-const button = document.querySelectorAll('.popup__button')
 
 // Темплейт карточки
 const cardTemplate = document.querySelector('#card-template').content;
@@ -73,61 +80,77 @@ openPopupAddCardButton.addEventListener('click', () => {
 //заполнение формы новой карточки
 newPlaceForm.addEventListener('submit', (evt) => {
     evt.preventDefault();
-    saveLoading(true)
+    setLoadingText(evt.submitter, true)
     //отправка карточки на сервер
     createCardApi({ name: inputNewPlaceName.value, link: inputNewPlaceLink.value })
     .then((data) => {
         const card = createCard(
             data,
             cardTemplate,
-            deleteCardElement,
+            deleteCard,
             openPopupImage,
             cardLikesNumber,
-            true,
-            handleLikes,
-            false
-        );
-   
+            userId,
+            handleLikes
+        )
     //отображение карточки на странице
     cardsContainer.prepend(card);
     //очистка формы
     newPlaceForm.reset();
     closePopup(newCardPopup);//закрытие попапа
     })
+    .catch(err => {
+        console.error(err);
+    })
+    .finally(() => {
+        setLoadingText(evt.submitter, false)
+    });
 });
 
 // функция редактирования формы профиля и отправки данных на сервер
-const handleFormSubmit = (evt) => {
+const handleEditProfileFormSubmit = (evt) => {
     evt.preventDefault();
-    profileTitle.textContent = nameInput.value;
-    profileDescription.textContent = jobInput.value;
-    saveLoading(true);
-    createUser({ name: profileTitle.textContent, about: profileDescription.textContent });
+    setLoadingText(evt.submitter, true);
+    createUser({ name: nameInput.value, about: jobInput.value })
+    .then(user => {
+        profileTitle.textContent = user.name;
+        profileDescription.textContent = user.about;
+    })
+    .catch(err => {
+        console.error(err);
+    })
+    .finally(() => {
+        setLoadingText(evt.submitter, false)
+    });
+
     closePopup(popupEdit);
 };
 //навесили слушатель на форму редактирования профиля
-editProfileForm.addEventListener('submit', handleFormSubmit);
+editProfileForm.addEventListener('submit', handleEditProfileFormSubmit);
 
-//отображение карточек с сервера
+//отображение карточек и данных пользователя с сервера
 Promise.all([getUser(), getInitialCards()])
 .then(([user, cards]) => {
     profileTitle.textContent = user.name;
     profileDescription.textContent = user.about;
     userAvatar = user.avatar;
+    userId = user._id;
     profileImage.setAttribute("style", `background-image: url('${userAvatar}')`);
     cards.forEach((card) => {
         const cardElement = createCard(
             card,
             cardTemplate,
-            deleteCardElement,
+            deleteCard,
             openPopupImage,
             cardLikesNumber,
-            card.owner._id === user._id,
+            user._id,
             handleLikes,
-            card.likes.some(like => like._id === user._id)
         );
         cardsContainer.append(cardElement);
     });
+})
+.catch(err => {
+    console.error(err);
 })
 
 //открытие попапа для изменения аватара
@@ -142,22 +165,20 @@ const avatarFormSubmit = (evt) => {
     profileImage.setAttribute(
         "style", `background-image: url('${urlAvatarInput.value}')`
     )
-    saveLoading(true)
-    newAvatarApi(urlAvatarInput.value);
+    setLoadingText(evt.submitter, true)
+    newAvatarApi(urlAvatarInput.value)
+    .catch(err => {
+        console.error(err);
+    })
+    .finally(() => {
+        setLoadingText(evt.submitter, false)
+    });
     avatarProfileForm.reset();
     closePopup(popupAvatar);
 }
 //навесили слушатель на форму с аватаром
 avatarProfileForm.addEventListener('submit', avatarFormSubmit)
 //функция, меняющая текст кнопки во время ожидания отправки формы
-export const saveLoading = (isLoading) => {
-    if(isLoading) {
-        button.forEach((el) => {
-            el.textContent = "Сохранение..."
-        })
-    } else {
-        button.forEach((el) => {
-            el.textContent = "Сохранить"
-        })
-    }
+const setLoadingText = (element, isLoading) => {
+    element.textContent = isLoading ? "Сохранение..." : "Сохранить";
 }

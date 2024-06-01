@@ -1,5 +1,3 @@
-import {saveLoading} from '../index'
-
 const config = {
     baseUrl: 'https://nomoreparties.co/v1/wff-cohort-14',
     headers: {
@@ -22,9 +20,6 @@ export const getUser = () => {
         headers: config.headers
     })
         .then(handleResponse)
-        .catch(err => {
-            console.log(err);
-        })
 };
 
 //отправка данных пользователя на сервер
@@ -35,12 +30,6 @@ export const createUser = (user) => {
         body: JSON.stringify(user)
       })
     .then(handleResponse)
-    .catch(err => {
-        console.log(err);
-    })
-    .finally(() => {
-        saveLoading(false)
-    })
 }
 
 //получение массива карточек
@@ -50,9 +39,6 @@ export const getInitialCards = () => {
         headers: config.headers
     })
     .then(handleResponse)
-    .catch(err => {
-        console.log(err);
-    })
 }
 
 //отправка карточки на сервер
@@ -63,12 +49,6 @@ export const createCardApi = (card) => {
         body: JSON.stringify(card)
     })
     .then(handleResponse)
-    .catch(err => {
-        console.log(err);
-    })
-    .finally(() => {
-        saveLoading(false)
-    })
 }
 
 //удаление карточки с сервера
@@ -78,9 +58,6 @@ export const deleteCardApi = (cardId) => {
         headers: config.headers
     })
     .then(handleResponse)
-    .catch(err => {
-        console.log(err);
-    })
 }
 //отправка лайка карточки на сервер
 export const pushLikeCardApi = (cardId) => {
@@ -89,9 +66,6 @@ export const pushLikeCardApi = (cardId) => {
         headers: config.headers
     })
     .then(handleResponse)
-    .catch(err => {
-        console.log(err);
-    })
 }
 //удаление лайка карточки с сервера
 export const deleteCardLikeApi = (cardId) => {
@@ -100,9 +74,6 @@ export const deleteCardLikeApi = (cardId) => {
         headers: config.headers
     })
     .then(handleResponse)
-    .catch(err => {
-        console.log(err);
-    })
 }
 //отправка на сервер нового изображения аватара
 export const newAvatarApi = (avatar) => {
@@ -112,10 +83,4 @@ export const newAvatarApi = (avatar) => {
         body: JSON.stringify({avatar: avatar})
     })
     .then(handleResponse)
-    .catch(err => {
-        console.log(err);
-    })
-    .finally(() => {
-        saveLoading(false)
-    })
 }
